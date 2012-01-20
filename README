@@ -1,2 +1,49 @@
+-= CiSiren =-
+
 Continuous Integration build status light controller.
-Here be instructions.
+
+INTRODUCTION:
+A Ruby application that polls from Continuous Integration Software (TeamCity) to determine the status of the build and controll a build status light accordingly.
+	- Build Successful: green light.
+	- Build Fails: flashing red light displaying morse code message.
+
+
+REQUIREMENTS:
+	Software:
+		- pkg-config-0.25
+		- libusb-1.0.3
+ 		- libusb-compat-0.1.3  (This is the version of libusb that works with ruby-usb-0.2)
+ 		- ruby-usb-0.2
+ 	
+ 	Hardware:
+ 		- Delcom USB HID Visual Signal Indicator GenII. I used the RGY 904008 version based on Ian Leitch's success story (http://notes.envato.com/developers/continuous-integration-flashing-lights/)
+
+
+INSTALLATION:
+	OS X (10.6.8):
+	
+	For in depth details of installation on OS X, read "Patching Ruby USB on Mac OSX" by Patrick Debois: http://www.jedi.be/blog/2009/11/11/ruby-usb-libusb/
+	Basically, the steps are:
+	
+		1) Install pkg-config-0.25
+		2) Install libusb-1.0.3
+		3) Install libusb-compat-0.1.3
+		4) Install ruby-usb-0.2
+			4.1) Solve the library and include path in ruby-usb's extconf.rb.
+			4.2) Specify the correct build architecture when compiling extconf.rb: ARCHFLAGS="-arch i386" ruby extconf.rb
+			4.3) Build with make command.
+			4.4) Modify usb.rb to catch the Errno::ERANGE error.
+			4.5) Install ruby-usb-0.2 with make install command.
+			
+	Ubuntu:
+	
+	Not experimented yet on Ubuntu. Instructions pending but I suppose it is relatively the same steps as on OS X.
+	
+
+FUTURE DEVELOPMENT:
+	- Implement build status check on multiple branches instead of just one.
+	- Implement display of yellow light when build is in progress.
+ 	- Externalize configuration values (e.g. urls, http requests username and password, morse code unit time, morse code message)
+ 	- Implement Abstract Factory for selection of light controller implementation depending on light hardware used.
+ 	- Implement Abstract Factory for selection of Continuous Integration build status data retrieval denpending on CI tool used (e.g. Hudson, CruiseControl, Continuum)
+ 
