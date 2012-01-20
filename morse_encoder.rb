@@ -73,8 +73,6 @@ class MorseEncoder
         end
       end
 
-
-
     }
 
     # Return message in morse code
