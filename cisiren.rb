@@ -22,8 +22,8 @@ class CiSiren
   	@doc_retriever = DocumentRetriever.new
   	
   	@build_status_rss_feed_uri =  URI('http://tools.dev.nymag.biz/httpAuth/feed.html?buildTypeId=bt6&itemsType=builds&userKey=1326404101969')
-  	@uri_request_username = "glabreche"
-  	@uri_request_password = "teamCity!@#123"
+  	@uri_request_username = ""
+  	@uri_request_password = ""
   	
   	@light_controller = LightController.new
   end
