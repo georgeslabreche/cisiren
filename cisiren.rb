@@ -20,12 +20,13 @@ class CiSiren
   	@morse_msg = morse_encoder.encode(BUILD_FAIL_MORSE_MESSAGE);
   	
   	@doc_retriever = DocumentRetriever.new
-  	
-  	@build_status_rss_feed_uri =  URI('http://tools.dev.nymag.biz/httpAuth/feed.html?buildTypeId=bt6&itemsType=builds&userKey=1326404101969')
+
   	@uri_request_username = ""
   	@uri_request_password = ""
   	
   	@light_controller = LightController.new
+  	
+  	initialize_branch_uri_array
   end
   
   def doc_retriever
@@ -55,62 +56,102 @@ class CiSiren
   def uri_request_password
   	@uri_request_password
   end
+  
+  def initialize_branch_uri_array
+  	# Build URI Array
+  	@branch_uri_array = []
+	
+	# trunk
+	@branch_uri_array << URI('')
+	
+	# QA
+	@branch_uri_array << URI('')
+	
+	# Publisher
+	@branch_uri_array << URI('')
+	
+	# Production
+	@branch_uri_array << URI('')
+	
+	# Author
+	@branch_uri_array << URI('')
+  end
 
   def run
 
-  	while true	
+  	while true
+  	
+  		# Check build status for every branch.
+  		# As soon as we detect a build failure in a branch, stop looping through the branches until build has been fixed.
+  		@branch_uri_array.each{ |build_status_feed_uri|
+  		
+  			# This flag will tell us to keep polling for the build status of a particular branch until it builds successfully.
+  			# Basically, we use this flag to tell us to keep reporting on branch's failed build status until it is fixed.
+  			# As long as the branch we are currently polling fails to build then don't move on to the next branch.
+  			build_successful = false
+  			
+  			while !build_successful
+  			
+				# First we want to check if the trunk is currently building.
+				# Unfortunately, the build status rss feed only informs us if a build has been successful or if it has failed. It doesn't inform us if there is a build in progress.
+				# Because of this, we need to look elsewhere to get that data: the build branch page.
+	
+				# The build branch page displays the current status of the build.
+				# When a build is in progress, the current status is "Running 1 build".
+				# When no build is in progress, the current status is "Idle": <span id="runningStatusTextIdbt6">Idle</span>
+
+				# The value of the current status is displaedy in a span element which has the "runningStatusTextIdbt6" id.
+	
+				# So, what we want to do is retrieve that span element and check its text value:
+				# 	- If it's equal to "Idle" then there is no build in progress
+				#	- If it's not equal to "Idle", there there is a build in progress.
+	
+				# TODO: implementation of  finding out if build is in progress
+
+				# create xml document build branch page 
+				# doc = doc_retriever.get_xml_doc(build_branch_page_uri, username, password)
+	
+				# retrieve build provress which is the value of the current status span element
+				#build_progress = XPath.first(doc, "//span[contains(., 'Idle')]").to_s
+	
+				#p build_progress
+	
+	
+				# If there is no build in progress, let's check the build state:
+
+				# create xml document of rss feed
+				doc = doc_retriever.get_xml_doc(build_status_feed_uri, uri_request_username, uri_request_password)
+
+				# Get the values we are interested in that will allow us to determine the status of the feed
+				#title = XPath.first(doc, '//entry/title').text()
+				name_xml_element = XPath.first(doc, "//entry/author/name")
+
+				if name_xml_element != nil
+					build_status_text = name_xml_element.text()
+	
+					light_color_key = BUILD_STATE_LIGHT_MAP[build_status_text]
+	
+					if build_status_text == "Successful Build"
+						switch_on_success_light(light_color_key)
+						
+						# Set flag that will indicate the system to move on to poll for the build status of the next branch in the list
+						build_successful = true
 		
-		# First we want to check if the trunk is currently building.
-		# Unfortunately, the build status rss feed only informs us if a build has been successful or if it has failed. It doesn't inform us if there is a build in progress.
-		# Because of this, we need to look elsewhere to get that data: the build branch page.
-	
-		# The build branch page displays the current status of the build.
-		# When a build is in progress, the current status is "Running 1 build".
-		# When no build is in progress, the current status is "Idle": <span id="runningStatusTextIdbt6">Idle</span>
-
-		# The value of the current status is displaedy in a span element which has the "runningStatusTextIdbt6" id.
-	
-		# So, what we want to do is retrieve that span element and check its text value:
-		# 	- If it's equal to "Idle" then there is no build in progress
-		#	- If it's not equal to "Idle", there there is a build in progress.
-	
-		# TODO: implementation of  finding out if build is in progress
-
-		# create xml document build branch page 
-		# doc = doc_retriever.get_xml_doc(build_branch_page_uri, username, password)
-	
-		# retrieve build provress which is the value of the current status span element
-		#build_progress = XPath.first(doc, "//span[contains(., 'Idle')]").to_s
-	
-		#p build_progress
-	
-	
-		# If there is no build in progress, let's check the build state:
-
-		# create xml document of rss feed
-		doc = doc_retriever.get_xml_doc(build_status_rss_feed_uri, uri_request_username, uri_request_password)
-
-		# Get the values we are interested in that will allow us to determine the status of the feed
-		#title = XPath.first(doc, '//entry/title').text()
-		name_xml_element = XPath.first(doc, "//entry/author/name")
-		
-	
-		if name_xml_element != nil
-			build_status_text = name_xml_element.text()
-	
-			light_color_key = BUILD_STATE_LIGHT_MAP[build_status_text]
-	
-			if build_status_text == "Successful Build"
-				switch_on_success_light(light_color_key)
-		
-			elsif build_status_text == "Failed Build"
-				manage_build_failure_light_thread(morse_msg, light_color_key)
-			end
+					elsif build_status_text == "Failed Build"
+						manage_build_failure_light_thread(morse_msg, light_color_key)
+						
+						# Set flag that will indicate the system to keep polling the build status of this branch until the build is fixed.
+						build_successful = false
+					end
 			
-		end
+				end
 		
-		# wait a second  before polling again
-		sleep 1
+				# wait two seconds before polling again
+				sleep 1
+			
+			end
+		
+		}
 		
 	end
 		

@@ -6,6 +6,8 @@ INTRODUCTION:
 A Ruby application that polls from Continuous Integration Software (TeamCity) to determine the status of the build and controll a build status light accordingly.
 	- Build Successful: green light.
 	- Build Fails: flashing red light displaying morse code message.
+	
+Multiple branches can be polled.
 
 
 REQUIREMENTS:
@@ -41,7 +43,6 @@ INSTALLATION:
 	
 
 FUTURE DEVELOPMENT:
-	- Implement build status check on multiple branches instead of just one.
 	- Implement display of yellow light when build is in progress.
  	- Externalize configuration values (e.g. urls, http requests username and password, morse code unit time, morse code message)
  	- Implement Abstract Factory for selection of light controller implementation depending on light hardware used.
