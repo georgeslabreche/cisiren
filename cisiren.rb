@@ -16,16 +16,22 @@ class CiSiren
 	}
 
   def initialize
+	puts "Starting CiSiren..."
+	
   	morse_encoder = MorseEncoder.new
   	@morse_msg = morse_encoder.encode(BUILD_FAIL_MORSE_MESSAGE);
+  	puts "Morse message to display on build failure is: " + BUILD_FAIL_MORSE_MESSAGE + " (" + @morse_msg + ")"
   	
+  	puts "Initializing RSS document retriever..."
   	@doc_retriever = DocumentRetriever.new
 
   	@uri_request_username = ""
   	@uri_request_password = ""
   	
+  	puts "Initializing light controller..."
   	@light_controller = LightController.new
   	
+  	puts "Retrieving branch URIs to monitor..."
   	initialize_branch_uri_array
   end
   
@@ -62,28 +68,21 @@ class CiSiren
   	@branch_uri_array = []
 	
 	# trunk
-	@branch_uri_array << URI('')
-	
-	# QA
-	@branch_uri_array << URI('')
-	
-	# Publisher
-	@branch_uri_array << URI('')
-	
-	# Production
-	@branch_uri_array << URI('')
-	
-	# Author
-	@branch_uri_array << URI('')
+	#@branch_uri_array << URI('')
+
   end
 
   def run
+  
+  	puts "Started."
 
   	while true
   	
   		# Check build status for every branch.
   		# As soon as we detect a build failure in a branch, stop looping through the branches until build has been fixed.
   		@branch_uri_array.each{ |build_status_feed_uri|
+  		
+  			#puts "Reading build status feed: " + build_status_feed_uri.to_s
   		
   			# This flag will tell us to keep polling for the build status of a particular branch until it builds successfully.
   			# Basically, we use this flag to tell us to keep reporting on branch's failed build status until it is fixed.
@@ -144,6 +143,13 @@ class CiSiren
 						build_successful = false
 					end
 			
+				else
+					# The requested element isn't found, skip to the next branch URI by marking build as successful.
+					build_successful = true
+					
+					# Warn that we are skipping this branch
+					puts "There was an error reading from the following build status feed, it has been skipped: " + build_status_feed_uri.to_s
+				
 				end
 		
 				# wait two seconds before polling again
